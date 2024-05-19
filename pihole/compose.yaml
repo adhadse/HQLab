@@ -1,0 +1,62 @@
+version: "3"
+
+services:
+  pihole:
+    container_name: pihole
+    image: pihole/pihole:latest
+    restart: unless-stopped
+    ports:
+      - 53:53/tcp
+      - 53:53/udp
+      # - "80:80/tcp"
+    secrets:
+      - piholeweb-password
+    environment:
+      TZ: 'Asia/Kolkata'
+      WEBPASSWORD:
+      WEBPASSWORD_FILE: /run/secrets/piholeweb-password
+    volumes:
+      - 'pihole_vol:/etc/pihole'
+      - 'dnsmasq_vol:/etc/dnsmasq.d'
+    networks:
+      - traefik_net
+    #  pihole-network:
+    #    ipv4_address: 192.168.1.3
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    labels:
+      # Dashboard
+      # https://github.com/JamesTurland/JimsGarage/blob/main/Pihole/docker-compose.yml
+      - traefik.enable=true
+      - traefik.docker.network=traefik_net
+      - traefik.http.routers.piholeweb.entrypoints=websecure
+      - traefik.http.routers.piholeweb.rule=Host(`pihole.hq.adhadse.com`)
+      - traefik.http.routers.piholeweb.tls=true
+      - traefik.http.routers.piholeweb.tls.certresolver=production
+      - traefik.http.routers.piholeweb.middlewares=piholeweb-redirectregex, piholeweb-secure-redirect
+      - traefik.http.middlewares.piholeweb-redirectregex.redirectregex.regex=^https://pihole.hq.adhadse.com/?$$
+      - traefik.http.middlewares.piholeweb-redirectregex.redirectregex.replacement=https://pihole.hq.adhadse.com/admin
+      - traefik.http.middlewares.piholeweb-secure-redirect.redirectscheme.scheme=https
+      - traefik.http.routers.piholeweb.service=piholeweb
+      - traefik.http.services.piholeweb.loadbalancer.server.port=80
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "3"
+    resources:
+      limits:
+        cpus: '0.005'
+        memory: 50M
+
+secrets:
+  piholeweb-password:
+    file: ./secrets/piholeweb-password.secret
+
+networks:
+  traefik_net:
+    external: true
+
+volumes:
+   pihole_vol:
+   dnsmasq_vol:

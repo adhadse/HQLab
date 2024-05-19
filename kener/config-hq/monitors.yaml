@@ -1,0 +1,24 @@
+- name: Pihole
+  description: Local DNS & DHCP server
+  tag: "pihole"
+  api:
+    method: GET
+    url: http://pihole.hq.adhadse.com
+  image: "/pihole.png"
+- name: Portainer
+  description: Container management
+  api:
+    method: GET
+    url: https://portainer.hq.adhadse.com
+- name: Earth
+  description: Our blue planet
+  tag: "earth"
+  defaultStatus: "UP"
+  image: "/earth.png"
+- name: Frogment
+  description: A free openAPI spec editor and linter that breaks down your spec into fragments to make editing easier and more intuitive. Visit https://www.frogment.com
+  tag: "frogment"
+  image: "/frogment.png"
+  api:
+    method: GET
+    url: https://www.frogment.com

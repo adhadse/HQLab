@@ -1,0 +1,35 @@
+version: '3'
+
+services:
+  paisa:
+    container_name: paisa
+    image: ananthakumaran/paisa:latest
+    security_opt:
+      - label=disable
+    restart: always
+    volumes:
+      - /paisa:/root/Documents/paisa/
+    networks:
+      - traefik_net
+    labels:
+      # WebUI
+      - traefik.enable=true
+      - traefik.docker.network=traefik_net
+      - traefik.http.routers.paisa.rule=Host(`paisa.hq.adhadse.com`)
+      - traefik.http.routers.paisa.entrypoints=websecure
+      - traefik.http.routers.paisa.tls=true
+      - traefik.http.routers.paisa.tls.certresolver=production
+      - traefik.http.routers.paisa.service=paisa
+      - traefik.http.services.paisa.loadbalancer.server.port=7500
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "3"
+    resources:
+      limits:
+        cpus: '0.001'
+        memory: 30M
+
+networks:
+  traefik_net:
+    external: true
