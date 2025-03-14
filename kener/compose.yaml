@@ -1,42 +1,52 @@
-version: '3.9'
+version: "3.9"
 
 services:
- kener:
-    container_name: kener-hq
-    image: rajnandan1/kener:latest
-    # healthcheck:
-    #   test: curl -f http://localhost:3000/ || exit 1
-    security_opt:
-      - no-new-privileges:true
-    environment:
-      TZ: Asia/Kolkata
-      PUID: 1000
-      PGID: 1000
-      GH_TOKEN: null
-      PORT: 3002
-      #CONFIG_DIR=/config
-      # NODE_EXTRA_CA_CERTS: /certs/rootCA.pem
-      # API_TOKEN: 
-      # API_IP: 
-    #ports:
-    #  - 3000:3000/tcp
-    networks:
-      - traefik_net
-    dns:
-      - 192.168.1.2
-    volumes:
-      - ./config-hq:/config:Z
-      - ./certs:/certs
-    labels:
-      - traefik.enable=true
-      - traefik.docker.network=traefik_net
-      - traefik.http.routers.kener-hq.rule=Host(`kener.hq.adhadse.com`)
-      - traefik.http.routers.kener-hq.entrypoints=websecure
-      - traefik.http.routers.kener-hq.tls=true
-      - traefik.http.routers.kener-hq.tls.certresolver=production
-      - traefik.http.routers.kener-hq.service=kener-hq
-      - traefik.http.services.kener-hq.loadbalancer.server.port=3002
+    kener:
+        container_name: kener-hq
+        image: rajnandan1/kener:latest
+        # healthcheck:
+        #   test: curl -f http://localhost:3000/ || exit 1
+        security_opt:
+            - no-new-privileges:true
+        secrets:
+            - KENER_SECRET_KEY
+        environment:
+            TZ: Asia/Kolkata
+            PUID: 1000
+            PGID: 1000
+            GH_TOKEN: null
+            PORT: 3002
+            KENER_SECRET_KEY: /run/secrets/KENER_SECRET_KEY
+            ORIGIN: https://status.hq.adhadse.com
+            # DATABASE_URL: sqlite://./database/kener.sqlite.db
+            #CONFIG_DIR=/config
+            # NODE_EXTRA_CA_CERTS: /certs/rootCA.pem
+            # API_TOKEN:
+            # API_IP:
+        #ports:
+        #  - 3000:3000/tcp
+        networks:
+            - traefik_net
+        dns:
+            - 192.168.1.2
+        volumes:
+            - ./config-hq:/config:Z
+            - ./certs:/certs
+            # - ./database:/app/database:rw
+        labels:
+            - traefik.enable=true
+            - traefik.docker.network=traefik_net
+            - traefik.http.routers.kener-hq.rule=Host(`status.hq.adhadse.com`)
+            - traefik.http.routers.kener-hq.entrypoints=websecure
+            - traefik.http.routers.kener-hq.tls=true
+            - traefik.http.routers.kener-hq.tls.certresolver=production
+            - traefik.http.routers.kener-hq.service=kener-hq
+            - traefik.http.services.kener-hq.loadbalancer.server.port=3002
 
 networks:
-  traefik_net:
-    external: true
+    traefik_net:
+        external: true
+
+secrets:
+    KENER_SECRET_KEY:
+        file: ./secrets/KENER_SECRET_KEY.secret

@@ -1,42 +1,41 @@
-version: '3'
+version: "3"
 
 services:
-  portainer:
-    container_name: portainer
-    image: portainer/portainer-ce:latest
-    # ports:
-    #   - "9443:9443"
-    #   - "8000:8000"
-    security_opt:
-      - label=disable
-    restart: always
-    volumes:
-      - /run/user/1000/podman/podman.sock:/var/run/docker.sock:z
-      - portainer_vol:/data
-    networks:
-      - traefik_net
-    labels:
-      # WebUI
-      - traefik.enable=true
-      - traefik.docker.network=traefik_net
-      - traefik.http.routers.portainer.rule=Host(`portainer.hq.adhadse.com`)
-      - traefik.http.routers.portainer.entrypoints=websecure
-      - traefik.http.routers.portainer.tls=true
-      - traefik.http.routers.portainer.tls.certresolver=production
-      - traefik.http.routers.portainer.service=portainer
-      - traefik.http.services.portainer.loadbalancer.server.port=9000
-    logging:
-      options:
-        max-size: "10m"
-        max-file: "3"
-    resources:
-      limits:
-        cpus: '0.001'
-        memory: 50M
+    portainer:
+        container_name: portainer
+        image: portainer/portainer-ce:latest
+        ports:
+            - "9443:9443"
+        #   - "8000:8000"
+        security_opt:
+            - label=disable
+        restart: always
+        volumes:
+            - /run/user/1000/podman/podman.sock:/var/run/docker.sock:z
+            - portainer_vol:/data
+        networks:
+            - traefik_net
+        # labels:
+        #   # WebUI
+        #   - traefik.enable=true
+        #   - traefik.docker.network=traefik_net
+        #   - traefik.http.routers.portainer.rule=Host(`portainer.hq.adhadse.com`)
+        #   - traefik.http.routers.portainer.entrypoints=websecure
+        #   - traefik.http.routers.portainer.tls=true
+        #   - traefik.http.routers.portainer.tls.certresolver=production
+        #   - traefik.http.routers.portainer.service=portainer
+        #   - traefik.http.services.portainer.loadbalancer.server.port=9000
+        logging:
+            options:
+                max-size: "10m"
+                max-file: "3"
+        resources:
+            limits:
+                cpus: "0.001"
+                memory: 50M
 
 volumes:
-  portainer_vol:
-
+    portainer_vol:
 networks:
-  traefik_net:
-    external: true
+    traefik_net:
+        external: true

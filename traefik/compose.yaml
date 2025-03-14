@@ -1,73 +1,113 @@
-version: '3'
+version: "3"
+
+x-podman:
+    network: traefik_net
+    userns: keep-id
 
 services:
-  traefik:
-    container_name: traefik
-    image: traefik:latest
-    restart: unless-stopped
-    security_opt:
-      - "label=type:container_runtime_t"
-    depends_on:
-      docker-socket-proxy:
-        condition: service_healthy
-    ports:
-      - 80:80
-      - 81:81
-      - 443:443
-      - 444:444
-      # -- (Optional) Enable Dashboard, don't do in production
-      - 8080:8080
-    volumes:
-      - /run/user/1000/podman/podman.sock:/var/run/docker.sock:ro
-      - ./config/traefik.yaml:/etc/traefik/traefik.yaml:ro
-      - ./config/conf/:/etc/traefik/conf/
-      - ./config/certs/:/etc/traefik/certs/
-    # -- (Optional) When using Cloudflare as Cert Resolver
-    secrets:
-      - "cloudflare-token"
-      - "cloudflare-email"
-    environment:
-      - CF_DNS_API_TOKEN_FILE=/run/secrets/cloudflare-token
-      - CF_API_EMAIL_FILE=/run/secrets/cloudflare-email
-    networks:
-      - traefik_net
-    # deploy:
-    #   labels:
-    #     - traefik.enable=true
-    #     - traefik.http.routers.traefik=true
-    #     - traefik.http.routers.traefik.rule=Host(`traefik.hq`)
-    #     - traefik.http.routers.traefik.service=api@internal
-    #     - traefik.http.routers.traefik.entrypoints=web
-    #     - traefik.http.services.traefik.loadbalancer.server.port=80
-    logging:
-      options:
-        max-size: "10m"
-        max-file: "3"
-    resources:
-      limits:
-        cpus: '0.001'
-        memory: 80M
-  
-  # docker-socket-proxy:
-  #   container_name: docker-socket-proxy
-  #   image: tecnativa/docker-socket-proxy
-  #   security_opt:
-  #     - label=disable
-  #   volumes:
-  #     - /run/user/1000/podman/podman.sock:/var/run/docker.sock:z
-  #   ports:
-  #     - 2375:2375
-  #   environment:
-  #     - CONTAINERS=1
-  #   networks:
-  #     - traefik_net
+    traefik:
+        container_name: traefik
+        image: traefik:latest
+        restart: unless-stopped
+        security_opt:
+            - label=type:container_runtime_t
+        # depends_on:
+        #     docker-socket-proxy:
+        #         condition: service_healthy
+        ports:
+            - 80:80
+            - 81:81
+            - 443:443
+            - 444:444
+            # -- (Optional) Enable Dashboard, don't do in production
+            - 8080:8080
+        networks:
+            - traefik_net
+        volumes:
+            - /run/user/1000/podman/podman.sock:/var/run/docker.sock:ro
+            - /var/log/traefik:/var/log/traefik
+            # - ./config/letsencrypt:/letsencrypt
+            - ./config/conf/:/etc/traefik/conf/
+            - ./config/certs/:/etc/traefik/certs/:rw
+        command:
+            - --api=true
+            - --api.insecure=true # disable in prod
+            - --log.level=DEBUG
+            - --accesslog=true
+            - --ping=true
+            - --accesslog.filepath=/var/log/traefik/access.log
+            - --providers.docker=true
+            - --providers.docker.exposedByDefault=false
+            - --entrypoints.web.address=:80
+            - --entrypoints.web.http.redirections.entrypoint.to=websecure
+            - --entryPoints.web.http.redirections.entrypoint.scheme=https
+            - --entrypoints.web.http.redirections.entrypoint.permanent=true
+            - --entrypoints.websecure.address=:443
+            - --entrypoints.websecure.asDefault=true
+            # TODO add web-external entrypoints
+            # - --entrypoints.websecure.http.tls.certresolver=staging
+            - --entrypoints.websecure.http.tls.domains[0].main=hq.adhadse.com
+            - --entrypoints.websecure.http.tls.domains[0].sans=*.hq.adhadse.com
+
+            ## Staging certificate resolver
+            - --certificatesresolvers.staging.acme.email=anudhadse66@gmail.com
+            - --certificatesresolvers.staging.acme.storage=/etc/traefik/certs/acme.json
+            - --certificatesresolvers.staging.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory
+            - --certificatesresolvers.staging.acme.dnschallenge=true
+            - --certificatesresolvers.staging.acme.dnschallenge.provider=cloudflare
+            - --certificatesresolvers.staging.acme.dnschallenge.resolvers=1.1.1.1:53,8.8.8.8:53
+
+            ## Production certificate resolver
+            - --certificatesresolvers.production.acme.email=anudhadse66@gmail.com
+            - --certificatesresolvers.production.acme.storage=/etc/traefik/certs/acme.json
+            - --certificatesresolvers.production.acme.caserver=https://acme-v02.api.letsencrypt.org/directory
+            - --certificatesresolvers.production.acme.dnschallenge=true
+            - --certificatesresolvers.production.acme.dnschallenge.provider=cloudflare
+            - --certificatesresolvers.production.acme.dnschallenge.resolvers=1.1.1.1:53,8.8.8.8:53
+        secrets:
+            - "cloudflare-token"
+            - "cloudflare-email"
+        environment:
+            - CF_DNS_API_TOKEN_FILE=/run/secrets/cloudflare-token
+            - CF_API_EMAIL_FILE=/run/secrets/cloudflare-email
+        labels:
+            - traefik.enable=true
+            - traefik.http.routers.traefikweb=true
+            - traefik.http.routers.traefikweb.service=traefikweb
+            - traefik.http.routers.traefikweb.rule=Host(`traefik.hq.adhadse.com`)
+            - traefik.http.routers.traefikweb.service=api@internal
+            - traefik.http.routers.traefikweb.entrypoints=websecure
+            - traefik.http.routers.traefikweb.tls.certresolver=production
+            - traefik.http.services.traefikweb.loadbalancer.server.port=8080
+        logging:
+            options:
+                max-size: "10m"
+                max-file: "3"
+        # resources:
+        #     limits:
+        #         cpus: "0.001"
+        #         memory: 80M
+
+    # docker-socket-proxy:
+    #   container_name: docker-socket-proxy
+    #   image: tecnativa/docker-socket-proxy
+    #   security_opt:
+    #     - label=disable
+    #   volumes:
+    #     - /run/user/1000/podman/podman.sock:/var/run/docker.sock:z
+    #   ports:
+    #     - 2375:2375
+    #   environment:
+    #     - CONTAINERS=1
+    #   networks:
+    #     - traefik_net
 
 secrets:
-  cloudflare-email:
-    file: "./secrets/cloudflare-email.secret"
-  cloudflare-token:
-    file: "./secrets/cloudflare-token.secret"
+    cloudflare-email:
+        file: "./secrets/cloudflare-email.secret"
+    cloudflare-token:
+        file: "./secrets/cloudflare-token.secret"
 
 networks:
-  traefik_net:
-    external: true
+    traefik_net:
+        external: true

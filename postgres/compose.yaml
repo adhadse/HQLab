@@ -1,0 +1,58 @@
+version: "3.9"
+
+services:
+    db:
+        image: postgres
+        container_name: posgres-hq
+        restart: always
+        ports:
+            - "5432:5432"
+        networks:
+            - traefik_net
+        secrets:
+            - POSTGRES_USER
+            - POSTGRES_PASSWORD
+        environment:
+            POSTGRES_USER: /secrets/POSTGRES_USER
+            POSTGRES_PASSWORD: /secrets/POSTGRES_PASSWORD
+        volumes:
+            - local_pgdata:/var/lib/postgresql/data
+
+    pgadmin:
+        image: dpage/pgadmin4
+        container_name: pgadmin
+        restart: always
+        # ports:
+        #     - "8888:80"
+        networks:
+            - traefik_net
+        secrets:
+            - POSTGRES_PASSWORD
+        environment:
+            PGADMIN_DEFAULT_EMAIL: anudhadse66@gmail.com
+            PGADMIN_DEFAULT_PASSWORD: /secrets/POSTGRES_PASSWORD
+        volumes:
+            - pgadmin-data:/var/lib/pgadmin
+        labels:
+            - traefik.enable=true
+            - traefik.docker.network=traefik_net
+            - traefik.http.routers.pgadmin.rule=Host(`pgadmin.hq.adhadse.com`)
+            - traefik.http.routers.pgadmin.entrypoints=websecure
+            - traefik.http.routers.pgadmin.tls=true
+            - traefik.http.routers.pgadmin.tls.certresolver=production
+            - traefik.http.routers.pgadmin.service=pgadmin
+            - traefik.http.services.pgadmin.loadbalancer.server.port=8888
+
+networks:
+    traefik_net:
+        external: true
+
+volumes:
+    local_pgdata:
+    pgadmin-data:
+
+secrets:
+    POSTGRES_USER:
+        file: ./secrets/POSTGRES_USER.secret
+    POSTGRES_PASSWORD:
+        file: ./secrets/POSTGRES_PASSWORD.secret
