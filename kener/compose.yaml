@@ -2,14 +2,13 @@ version: "3.9"
 
 services:
     kener:
-        container_name: kener-hq
+        container_name: kener
         image: rajnandan1/kener:latest
         # healthcheck:
         #   test: curl -f http://localhost:3000/ || exit 1
-        security_opt:
-            - no-new-privileges:true
         secrets:
             - KENER_SECRET_KEY
+        restart: always
         environment:
             TZ: Asia/Kolkata
             PUID: 1000
@@ -18,7 +17,7 @@ services:
             PORT: 3002
             KENER_SECRET_KEY: /run/secrets/KENER_SECRET_KEY
             ORIGIN: https://status.hq.adhadse.com
-            # DATABASE_URL: sqlite://./database/kener.sqlite.db
+            DATABASE_URL: ${KENER_POSTGRES_URL}
             #CONFIG_DIR=/config
             # NODE_EXTRA_CA_CERTS: /certs/rootCA.pem
             # API_TOKEN:
@@ -30,8 +29,7 @@ services:
         dns:
             - 192.168.1.2
         volumes:
-            - ./config-hq:/config:Z
-            - ./certs:/certs
+            - ./uploads:/app/uploads:z
             # - ./database:/app/database:rw
         labels:
             - traefik.enable=true

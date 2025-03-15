@@ -8,7 +8,7 @@ services:
     traefik:
         container_name: traefik
         image: traefik:latest
-        restart: unless-stopped
+        restart: always
         security_opt:
             - label=type:container_runtime_t
         # depends_on:
@@ -19,6 +19,7 @@ services:
             - 81:81
             - 443:443
             - 444:444
+            # - 5432:5432
             # -- (Optional) Enable Dashboard, don't do in production
             - 8080:8080
         networks:
@@ -44,6 +45,7 @@ services:
             - --entrypoints.web.http.redirections.entrypoint.permanent=true
             - --entrypoints.websecure.address=:443
             - --entrypoints.websecure.asDefault=true
+            - --entrypoints.db.address=:5432
             # TODO add web-external entrypoints
             # - --entrypoints.websecure.http.tls.certresolver=staging
             - --entrypoints.websecure.http.tls.domains[0].main=hq.adhadse.com
