@@ -1,0 +1,8 @@
+http:
+  use_x_forwarded_for: true
+  trusted_proxies:
+    - 10.89.2.12
+    - 10.89.2.1
+    - 10.89.2.2
+    - ::1
+    - 10.89.2.0/24

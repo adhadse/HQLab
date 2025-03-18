@@ -7,7 +7,7 @@ x-podman:
 services:
     traefik:
         container_name: traefik
-        image: traefik:latest
+        image: traefik:v3.3.4
         restart: always
         security_opt:
             - label=type:container_runtime_t

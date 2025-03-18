@@ -1,0 +1,37 @@
+version: "3.9"
+
+services:
+    homeassistant:
+        container_name: homeassistant
+        image: lscr.io/linuxserver/homeassistant:latest
+        restart: always
+        # ports:
+        #     - "8123:8123"
+        # devices:
+        #     - /dev/ttyACM0
+        volumes:
+            - ./config:/config:Z
+        # network_mode: host
+        networks:
+            - traefik_net
+        environment:
+            - PUID=1000
+            - PGID=1000
+            - TZ=Etc/UTC
+        labels:
+            - traefik.enable=true
+            - traefik.docker.network=traefik_net
+            - traefik.http.routers.homeassistant.rule=Host(`homeassistant.hq.adhadse.com`)
+            - traefik.http.routers.homeassistant.entrypoints=websecure
+            - traefik.http.routers.homeassistant.tls=true
+            - traefik.http.routers.homeassistant.tls.certresolver=production
+            - traefik.http.routers.homeassistant.service=homeassistant
+            - traefik.http.services.homeassistant.loadbalancer.server.port=8123
+            # Important for WebSocket support
+            - "traefik.http.routers.homeassistant.middlewares=homeassistant-headers"
+            - "traefik.http.middlewares.homeassistant-headers.headers.customrequestheaders.X-Forwarded-Proto=https"
+            - "traefik.http.middlewares.homeassistant-headers.headers.customresponseheaders.Connection=Upgrade"
+
+networks:
+    traefik_net:
+        external: true
