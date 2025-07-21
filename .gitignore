@@ -2,6 +2,7 @@
 */*/static
 */secrets
 */config/certs
+*/config/dyanmic_configs/*
 .env
 # Ignore folders.
 .storage

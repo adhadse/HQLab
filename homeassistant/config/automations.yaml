@@ -1,0 +1,32 @@
+- id: '1747726899302'
+  alias: Wake up automation
+  description: ''
+  triggers:
+  - trigger: time
+    at: 04:00:00
+  conditions: []
+  actions:
+  - action: light.toggle
+    metadata: {}
+    data:
+      kelvin: 2606
+      brightness_pct: 35
+    target:
+      area_id: study
+  mode: single
+- id: '1747727454529'
+  alias: Wake up automation
+  description: ''
+  triggers:
+  - trigger: time
+    at: 04:00:00
+  conditions: []
+  actions:
+  - action: light.turn_on
+    metadata: {}
+    data:
+      kelvin: 2606
+      brightness_pct: 35
+    target:
+      area_id: study
+  mode: single

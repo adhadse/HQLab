@@ -6,3 +6,10 @@ http:
     - 10.89.2.2
     - ::1
     - 10.89.2.0/24
+
+switch:
+  - platform: wake_on_lan
+    mac: 72:45:5a:de:74:b5
+    name: workstation-oni-wlp12s0
+
+wake_on_lan:

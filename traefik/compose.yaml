@@ -21,7 +21,7 @@ services:
             - 444:444
             # - 5432:5432
             # -- (Optional) Enable Dashboard, don't do in production
-            - 8080:8080
+            # - 8080:8080
         networks:
             - traefik_net
         volumes:
@@ -30,6 +30,7 @@ services:
             # - ./config/letsencrypt:/letsencrypt
             - ./config/conf/:/etc/traefik/conf/
             - ./config/certs/:/etc/traefik/certs/:rw
+            - ./config/dynamic_configs:/dynamic_configs:ro,Z # Mount dynamic configs directory
         command:
             - --api=true
             - --api.insecure=true # disable in prod
@@ -39,6 +40,8 @@ services:
             - --accesslog.filepath=/var/log/traefik/access.log
             - --providers.docker=true
             - --providers.docker.exposedByDefault=false
+            - --providers.file.directory=/dynamic_configs
+            - --providers.file.watch=true
             - --entrypoints.web.address=:80
             - --entrypoints.web.http.redirections.entrypoint.to=websecure
             - --entryPoints.web.http.redirections.entrypoint.scheme=https
@@ -80,7 +83,7 @@ services:
             - traefik.http.routers.traefikweb.service=api@internal
             - traefik.http.routers.traefikweb.entrypoints=websecure
             - traefik.http.routers.traefikweb.tls.certresolver=production
-            - traefik.http.services.traefikweb.loadbalancer.server.port=8080
+            # - traefik.http.services.traefikweb.loadbalancer.server.port=8080
         logging:
             options:
                 max-size: "10m"
@@ -113,3 +116,6 @@ secrets:
 networks:
     traefik_net:
         external: true
+        driver_opts:
+            subnet: "10.89.2.0/24"
+            gateway: "10.89.2.1"
