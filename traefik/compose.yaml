@@ -48,7 +48,8 @@ services:
             - --entrypoints.web.http.redirections.entrypoint.permanent=true
             - --entrypoints.websecure.address=:443
             - --entrypoints.websecure.asDefault=true
-            - --entrypoints.db.address=:5432
+            - --entrypoints.db.address=:5432 # postgres
+            - --entrypoints.redisdb.address=:6379 # redis
             # TODO add web-external entrypoints
             # - --entrypoints.websecure.http.tls.certresolver=staging
             - --entrypoints.websecure.http.tls.domains[0].main=hq.adhadse.com

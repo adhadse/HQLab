@@ -3,7 +3,7 @@ version: "3.9"
 services:
     kener:
         container_name: kener
-        image: rajnandan1/kener:latest
+        image: rajnandan1/kener:3.2.15
         # healthcheck:
         #   test: curl -f http://localhost:3000/ || exit 1
         secrets:

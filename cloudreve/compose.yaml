@@ -1,0 +1,67 @@
+services:
+    cloudreve:
+        image: cloudreve/cloudreve:latest
+        container_name: cloudreve
+        depends_on:
+            # - postgresql
+            - redis
+        restart: always
+        user: "1000:1000"
+        # ports:
+        #     - 5212:5212
+        environment:
+            - CR_CONF_Database.Type=postgres
+            - CR_CONF_Database.Host=${POSTGRES_HOST}
+            - CR_CONF_Database.User=${POSTGRES_USER}
+            - CR_CONF_Database.Name=${POSTGRES_DB}
+            - CR_CONF_Database.Password=${POSTGRES_PASSWORD}
+            - CR_CONF_Database.Port=5432
+            - CR_CONF_Redis.Server=redis-hq.hq.adhadse.com:6379
+        volumes:
+            - cloudreve_backend_data:/cloudreve/data
+            # - /nextcloud_vol:/cloudreve/uploads:z
+        networks:
+            - traefik_net
+        labels:
+            - "traefik.enable=true"
+            - "traefik.http.routers.cloudreve.rule=Host(`cloudreve.hq.adhadse.com`)"
+            - "traefik.http.routers.cloudreve.entrypoints=websecure"
+            - "traefik.http.routers.cloudreve.tls=true"
+            - "traefik.http.routers.cloudreve.tls.certresolver=letsencrypt"
+            - "traefik.http.middlewares.cloudreve-headers.headers.customFrameOptionsValue=SAMEORIGIN"
+            - "traefik.http.middlewares.cloudreve-headers.headers.stsSeconds=15552000"
+            - "traefik.http.middlewares.cloudreve-headers.headers.stsIncludeSubdomains=true"
+            - "traefik.http.middlewares.cloudreve-headers.headers.stsPreload=true"
+            - "traefik.http.routers.cloudreve.middlewares=cloudreve-headers"
+            - "traefik.http.services.cloudreve.loadbalancer.server.port=5212"
+
+    # postgresql:
+    #     # Best practice: Pin to major version.
+    #     # NOTE: For major version jumps:
+    #     # backup & consult https://www.postgresql.org/docs/current/pgupgrade.html
+    #     image: postgres:17
+    #     container_name: postgresql
+    #     environment:
+    #         - POSTGRES_USER=cloudreve
+    #         - POSTGRES_DB=cloudreve
+    #         - POSTGRES_HOST_AUTH_METHOD=trust
+    #     volumes:
+    #         - database_postgres:/var/lib/postgresql/data
+
+    redis:
+        image: redis:latest
+        container_name: redis
+        ports:
+            - 6379:6379
+        volumes:
+            - redis_vol:/data
+        networks:
+            - traefik_net
+
+volumes:
+    cloudreve_backend_data:
+    redis_vol:
+
+networks:
+    traefik_net:
+        external: true

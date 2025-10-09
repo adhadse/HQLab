@@ -2,7 +2,7 @@
 */*/static
 */secrets
 */config/certs
-*/config/dyanmic_configs/*
+*/config/dynamic_configs/*
 .env
 # Ignore folders.
 .storage
