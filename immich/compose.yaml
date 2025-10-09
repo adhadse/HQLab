@@ -16,7 +16,7 @@ services:
         # ports:
         #     - "2283:2283"
         depends_on:
-            - redis
+            - immich_redis
         restart: always
         networks:
             - traefik_net
@@ -48,7 +48,7 @@ services:
         healthcheck:
             disable: false
 
-    redis:
+    immich_redis:
         container_name: immich_redis
         image: docker.io/redis:6.2-alpine@sha256:148bb5411c184abd288d9aaed139c98123eeb8824c5d3fce03cf721db58066d8
         healthcheck:
