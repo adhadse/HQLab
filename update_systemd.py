@@ -440,7 +440,11 @@ def generate_podlet(container_name: str, service_name: str):
     subprocess.run(podlet_cmd, shell=True, check=True)
 
     with open(service_file, "a") as f:
-        f.write("\n[Install]\n# Start by default on boot\nWantedBy=default.target\n")
+        f.write("\n[Unit]\n")
+        f.write("After=podman-secrets-loader.service\n")  # ADD THIS
+        f.write("Requires=podman-secrets-loader.service\n")  # ADD THIS
+        f.write("\n[Install]\n")
+        f.write("WantedBy=default.target\n")
 
 
 def reload_systemd():
@@ -653,6 +657,60 @@ def cleanup_old_secrets():
         )
 
 
+def fetch_all_secrets(base_dir: str, gcp_project_id: str, service_account_key: str):
+    """Fetch all secrets for enabled projects (used on boot)."""
+    activate_gcp_service_account(service_account_key, gcp_project_id)
+
+    projects = discover_compose_projects(base_dir)
+    enabled_projects = {
+        name: info
+        for name, info in projects.items()
+        if info["config"]["enabled"] and info["config"]["enable_gcp_integration"]
+    }
+
+    for project_name, project_info in enabled_projects.items():
+        config = project_info["config"]
+        secret_name = config["secret_name"]
+
+        if secret_name:
+            fetch_secrets_to_tmpfs(project_name, secret_name, gcp_project_id)
+
+
+def ensure_podman_secrets_service():
+    """Check if systemd service file exists, create it if not."""
+
+    service_path = Path.home() / ".config/systemd/user/podman-secrets-loader.service"
+
+    if service_path.exists():
+        print(f"Service file already exists at: {service_path}")
+        return
+
+    # Create directory if it doesn't exist
+    service_path.parent.mkdir(parents=True, exist_ok=True)
+
+    # Service file content
+    service_content = """[Unit]
+Description=Load GCP secrets for Podman containers
+Before=default.target
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/home/adhadse/podman_compose/update_systemd.py --fetch-secrets-only
+RemainAfterExit=yes
+
+[Install]
+WantedBy=default.target
+"""
+
+    # Write the service file
+    service_path.write_text(service_content)
+    print(
+        f"Load GCP secrets for Podman containers Service file created at: {service_path}"
+    )
+
+
 # ============================================================================
 # Main Function
 # ============================================================================
@@ -724,6 +782,11 @@ Examples:
         "--cleanup", action="store_true", help="Clean up old secrets from tmpfs"
     )
     parser.add_argument(
+        "--fetch-secrets-only",
+        action="store_true",
+        help="Only fetch secrets without starting services (used by systemd on boot)",
+    )
+    parser.add_argument(
         "--service-account-key",
         default=GCP_SERVICE_ACCOUNT_KEY,
         help=f"Path to GCP service account key (default: {GCP_SERVICE_ACCOUNT_KEY})",
@@ -731,11 +794,16 @@ Examples:
 
     args = parser.parse_args()
 
+    ensure_podman_secrets_service()
+
     # Handle cleanup
     if args.cleanup:
         print("Cleaning up old secrets from tmpfs...")
         cleanup_old_secrets()
         print("✅ Cleanup complete\n")
+        return
+    if args.fetch_secrets_only:
+        fetch_all_secrets(args.base_dir, args.project_id, args.service_account_key)
         return
 
     # Discover all projects
@@ -822,6 +890,14 @@ Examples:
         for service_name in all_services:
             start_service(service_name)
 
+    print("\nEnabling secrets loader service...")
+    subprocess.run(
+        "systemctl --user enable podman-secrets-loader.service",
+        shell=True,
+        check=True,
+    )
+
+    print("✅ Secrets loader enabled")
     # Enable linger
     print("\nEnabling linger...")
     enable_linger()
