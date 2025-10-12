@@ -1,16 +1,20 @@
 version: "3.9"
 
+x-config:
+    enabled: true # Service will be started by update_systemd.py
+
 services:
     homeassistant:
         container_name: homeassistant
-        image: lscr.io/linuxserver/homeassistant:latest
+        image: homeassistant/home-assistant:latest
         restart: always
         # ports:
         #     - "8123:8123"
         # devices:
         #     - /dev/ttyACM0
+        # user: "1000:1000" # direct podman user mapping
         volumes:
-            - ./config:/config:Z
+            - /home/adhadse/.config/hq_lab_configs/homeassistant:/config:Z
         # network_mode: host
         networks:
             - traefik_net

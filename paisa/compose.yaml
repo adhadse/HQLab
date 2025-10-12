@@ -1,5 +1,8 @@
 version: "3"
 
+x-config:
+    enabled: true # Service will be started by update_systemd.py
+
 services:
     paisa:
         container_name: paisa

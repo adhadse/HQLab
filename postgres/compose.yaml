@@ -1,5 +1,10 @@
 version: "3.9"
 
+x-config:
+    enabled: true # Service will be started by update_systemd.py
+    enable_gcp_integration: true # Fetch secrets/config from GCP
+    secret_name: postgres-hq-secrets # Optional: override secret name
+
 services:
     db:
         image: postgres:17
@@ -9,9 +14,6 @@ services:
             - "5432:5432"
         networks:
             - traefik_net
-        # secrets:
-        #     - POSTGRES_USER
-        #     - POSTGRES_PASSWORD
         environment:
             POSTGRES_USER: ${POSTGRES_USER}
             POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}

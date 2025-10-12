@@ -1,5 +1,11 @@
 version: "3.9"
 
+x-config:
+    enabled: true # Service will be started by update_systemd.py
+    enable_gcp_integration: true # Fetch secrets/config from GCP
+    secret_name: kener-hq-secrets # Optional: override secret name
+    # config_name: kener-config # Optional: override config name
+
 services:
     kener:
         container_name: kener
@@ -17,7 +23,7 @@ services:
             PORT: 3002
             KENER_SECRET_KEY: /run/secrets/KENER_SECRET_KEY
             ORIGIN: https://status.hq.adhadse.com
-            DATABASE_URL: ${KENER_POSTGRES_URL}
+            DATABASE_URL: ${DATABASE_URL}
             #CONFIG_DIR=/config
             # NODE_EXTRA_CA_CERTS: /certs/rootCA.pem
             # API_TOKEN:
@@ -29,7 +35,7 @@ services:
         dns:
             - 192.168.1.2
         volumes:
-            - ./uploads:/app/uploads:z
+            - kener_data:/app/uploads
             # - ./database:/app/database:rw
         labels:
             - traefik.enable=true
@@ -47,4 +53,8 @@ networks:
 
 secrets:
     KENER_SECRET_KEY:
-        file: ./secrets/KENER_SECRET_KEY.secret
+        file: ${SECRETS_PATH}/KENER_SECRET_KEY
+
+volumes:
+    kener_data:
+        external: true

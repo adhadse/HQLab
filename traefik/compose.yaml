@@ -1,5 +1,10 @@
 version: "3"
 
+x-config:
+    enabled: true # Service will be started by update_systemd.py
+    enable_gcp_integration: true # Fetch secrets/config from GCP
+    secret_name: traefik-hq-secrets # Optional: override secret name
+
 x-podman:
     network: traefik_net
     userns: keep-id
@@ -71,11 +76,11 @@ services:
             - --certificatesresolvers.production.acme.dnschallenge.provider=cloudflare
             - --certificatesresolvers.production.acme.dnschallenge.resolvers=1.1.1.1:53,8.8.8.8:53
         secrets:
-            - "cloudflare-token"
-            - "cloudflare-email"
+            - CLOUDFLARE_TOKEN
+            - CLOUDFLARE_EMAIL
         environment:
-            - CF_DNS_API_TOKEN_FILE=/run/secrets/cloudflare-token
-            - CF_API_EMAIL_FILE=/run/secrets/cloudflare-email
+            - CF_DNS_API_TOKEN_FILE=/run/secrets/CLOUDFLARE_EMAIL
+            - CF_API_EMAIL_FILE=/run/secrets/CLOUDFLARE_EMAIL
         labels:
             - traefik.enable=true
             - traefik.http.routers.traefikweb=true
@@ -109,10 +114,10 @@ services:
     #     - traefik_net
 
 secrets:
-    cloudflare-email:
-        file: "./secrets/cloudflare-email.secret"
-    cloudflare-token:
-        file: "./secrets/cloudflare-token.secret"
+    CLOUDFLARE_EMAIL:
+        file: ${SECRETS_PATH}/CLOUDFLARE_EMAIL
+    CLOUDFLARE_TOKEN:
+        file: ${SECRETS_PATH}/CLOUDFLARE_TOKEN
 
 networks:
     traefik_net:

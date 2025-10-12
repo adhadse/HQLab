@@ -1,5 +1,10 @@
 version: "3"
 
+x-config:
+    enabled: true # Service will be started by update_systemd.py
+    enable_gcp_integration: true # Fetch secrets/config from GCP
+    secret_name: pihole-hq-secrets # Optional: override secret name
+
 services:
     pihole:
         container_name: pihole
@@ -11,11 +16,10 @@ services:
             # # You need to open this when NOT using reverse proxy server
             # - 9443:80/tcp
         secrets:
-            - piholeweb-password
+            - WEBPASSWORD
         environment:
             TZ: "Asia/Kolkata"
-            WEBPASSWORD:
-            WEBPASSWORD_FILE: /run/secrets/piholeweb-password
+            WEBPASSWORD: ${WEBPASSWORD}
             FTLCONF_dns_upstreams: "1.1.1.1;8.8.8.8"
         volumes:
             - "pihole_vol:/etc/pihole"
@@ -58,8 +62,8 @@ services:
         #         memory: 50M
 
 secrets:
-    piholeweb-password:
-        file: ./secrets/piholeweb-password.secret
+    WEBPASSWORD:
+        file: ${SECRETS_PATH}/WEBPASSWORD
 
 networks:
     traefik_net:
