@@ -441,8 +441,12 @@ def generate_podlet(container_name: str, service_name: str):
 
     with open(service_file, "a") as f:
         f.write("\n[Unit]\n")
-        f.write("After=podman-secrets-loader.service\n")  # ADD THIS
-        f.write("Requires=podman-secrets-loader.service\n")  # ADD THIS
+        f.write("After=podman-secrets-loader.service\n")
+        f.write("Requires=podman-secrets-loader.service\n")
+        f.write("StartLimitBurst=5\n")
+        f.write("StartLimitIntervalSec=200\n")
+        f.write("\n[Service]\n")
+        f.write("RestartSec=10s\n")
         f.write("\n[Install]\n")
         f.write("WantedBy=default.target\n")
 
@@ -694,11 +698,15 @@ Description=Load GCP secrets for Podman containers
 Before=default.target
 After=network-online.target
 Wants=network-online.target
+StartLimitBurst=5
+StartLimitIntervalSec=200
 
 [Service]
 Type=oneshot
-ExecStart=/home/adhadse/podman_compose/update_systemd.py --fetch-secrets-only
+ExecStart=python3 /home/adhadse/podman_compose/update_systemd.py --fetch-secrets-only
 RemainAfterExit=yes
+Restart=on-failure
+RestartSec=10s
 
 [Install]
 WantedBy=default.target
