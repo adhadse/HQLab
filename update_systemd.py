@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 # update_systemd.py
 
-import os
-import subprocess
 import argparse
-import yaml
 import json
+import os
 import shutil
+import subprocess
 from pathlib import Path
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, List, Optional, Tuple
+
+import yaml
 
 # ============================================================================
 # GCP Configuration
@@ -707,6 +708,7 @@ ExecStart=python3 /home/adhadse/podman_compose/update_systemd.py --fetch-secrets
 RemainAfterExit=yes
 Restart=on-failure
 RestartSec=10s
+RemainAfterExit=yes
 
 [Install]
 WantedBy=default.target
