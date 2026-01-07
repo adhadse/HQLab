@@ -79,7 +79,7 @@ services:
             - CLOUDFLARE_TOKEN
             - CLOUDFLARE_EMAIL
         environment:
-            - CF_DNS_API_TOKEN_FILE=/run/secrets/CLOUDFLARE_EMAIL
+            - CF_DNS_API_TOKEN_FILE=/run/secrets/CLOUDFLARE_TOKEN
             - CF_API_EMAIL_FILE=/run/secrets/CLOUDFLARE_EMAIL
         labels:
             - traefik.enable=true
